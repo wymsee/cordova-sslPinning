@@ -74,7 +74,7 @@ Accept all SSL certificates.  Or disable accepting all certificates.
         console.log('error :(');
     });
 
-### setTimeouts
+### setTimeouts (Android only)
 Set connectionTimeout and readTimeout in milliseconds. Both default to 0 if this function is not used.
 
     cordovaHTTP.setTimeouts(5000, 10000, function() {
