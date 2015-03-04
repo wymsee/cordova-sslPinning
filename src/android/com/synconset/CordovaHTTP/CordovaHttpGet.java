@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Map;
+import java.net.SocketTimeoutException;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -35,6 +36,7 @@ public class CordovaHttpGet extends CordovaHttp implements Runnable {
         try {
             HttpRequest request = HttpRequest.get(this.getUrlString(), this.getParams(), true);
             this.setupSecurity(request);
+            this.setupTimeouts(request);
             request.acceptCharset(CHARSET);
             request.headers(this.getHeaders());
             int code = request.code();
@@ -55,6 +57,8 @@ public class CordovaHttpGet extends CordovaHttp implements Runnable {
                 this.respondWithError(0, "The host could not be resolved");
             } else if (e.getCause() instanceof SSLHandshakeException) {
                 this.respondWithError("SSL handshake failed");
+            } else if (e.getCause() instanceof SocketTimeoutException) {
+                this.respondWithError("Timeout");
             } else {
                 this.respondWithError("There was an error with the request");
             }

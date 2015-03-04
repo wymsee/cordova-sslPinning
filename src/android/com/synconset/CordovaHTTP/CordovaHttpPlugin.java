@@ -88,6 +88,11 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             String value = args.getString(1);
             this.setHeader(header, value);
             callbackContext.success();
+        } else if (action.equals("setTimeouts")) {
+            int connectionTimeout = args.getInt(0);
+            int readTimeout = args.getInt(1);
+            CordovaHttp.setTimeouts(connectionTimeout, readTimeout);
+            callbackContext.success();
         } else if (action.equals("uploadFile")) {
             String urlString = args.getString(0);
             JSONObject params = args.getJSONObject(1);
@@ -121,6 +126,10 @@ public class CordovaHttpPlugin extends CordovaPlugin {
 
     private void setHeader(String header, String value) {
         this.globalHeaders.put(header, value);
+    }
+
+    private void setTimeouts(int connectionTimeout, int readTimeout) {
+        // this.globalHeaders.put(header, value);
     }
 
     private void enableSSLPinning(boolean enable) throws GeneralSecurityException, IOException {

@@ -19,6 +19,9 @@ var http = {
     acceptAllCerts: function(allow, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "acceptAllCerts", [allow]);
     },
+    setTimeouts: function(connectionTimeout, readTimeout, success, failure) {
+        return exec(success, failure, "CordovaHttpPlugin", "setTimeouts", [connectionTimeout, readTimeout]);
+    },
     post: function(url, params, headers, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "post", [url, params, headers]);
     },
@@ -110,6 +113,9 @@ if (typeof angular !== "undefined") {
             },
             acceptAllCerts: function(allow) {
                 return makePromise(http.acceptAllCerts, [allow]);
+            },
+            setTimeouts: function(connectionTimeout, readTimeout) {
+                return makePromise(http.setTimeouts, [connectionTimeout, readTimeout]);
             },
             post: function(url, params, headers) {
                 return makePromise(http.post, [url, params, headers], true);

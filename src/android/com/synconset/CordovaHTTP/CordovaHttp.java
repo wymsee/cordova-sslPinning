@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -35,6 +36,8 @@ public abstract class CordovaHttp {
     
     private static AtomicBoolean sslPinning = new AtomicBoolean(false);
     private static AtomicBoolean acceptAllCerts = new AtomicBoolean(false);
+    private static AtomicInteger connectionTimeout = new AtomicInteger(0);
+    private static AtomicInteger readTimeout = new AtomicInteger(0);
     
     private String urlString;
     private Map<?, ?> params;
@@ -61,6 +64,10 @@ public abstract class CordovaHttp {
             sslPinning.set(false);
         }
     }
+    public static void setTimeouts(int cTimeout, int rTimeout) {
+        connectionTimeout.set(cTimeout);
+        readTimeout.set(rTimeout);
+    }
     
     protected String getUrlString() {
         return this.urlString;
@@ -86,6 +93,13 @@ public abstract class CordovaHttp {
         if (sslPinning.get()) {
             request.pinToCerts();
         }
+        return request;
+    }
+
+    protected HttpRequest setupTimeouts(HttpRequest request) {
+        request.connectTimeout(connectionTimeout.get());
+        request.readTimeout(readTimeout.get());
+
         return request;
     }
     
