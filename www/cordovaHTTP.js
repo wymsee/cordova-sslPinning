@@ -19,8 +19,17 @@ var http = {
     acceptAllCerts: function(allow, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "acceptAllCerts", [allow]);
     },
+    setTimeouts: function(connectionTimeout, readTimeout, success, failure) {
+        return exec(success, failure, "CordovaHttpPlugin", "setTimeouts", [connectionTimeout, readTimeout]);
+    },
     post: function(url, params, headers, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "post", [url, params, headers]);
+    },
+    put: function(url, params, headers, success, failure) {
+        return exec(success, failure, "CordovaHttpPlugin", "put", [url, params, headers]);
+    },
+    delete: function(url, params, headers, success, failure) {
+        return exec(success, failure, "CordovaHttpPlugin", "delete", [url, params, headers]);
     },
     get: function(url, params, headers, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "get", [url, params, headers]);
@@ -111,8 +120,17 @@ if (typeof angular !== "undefined") {
             acceptAllCerts: function(allow) {
                 return makePromise(http.acceptAllCerts, [allow]);
             },
+            setTimeouts: function(connectionTimeout, readTimeout) {
+                return makePromise(http.setTimeouts, [connectionTimeout, readTimeout]);
+            },
             post: function(url, params, headers) {
                 return makePromise(http.post, [url, params, headers], true);
+            },
+            put: function(url, params, headers) {
+                return makePromise(http.put, [url, params, headers], true);
+            },
+            delete: function(url, params, headers) {
+                return makePromise(http.delete, [url, params, headers], true);
             },
             get: function(url, params, headers) {
                 return makePromise(http.get, [url, params, headers], true);

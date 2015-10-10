@@ -66,6 +66,22 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             HashMap<String, String> headersMap = this.addToMap(this.globalHeaders, headers);
             CordovaHttpPost post = new CordovaHttpPost(urlString, paramsMap, headersMap, callbackContext);
             cordova.getThreadPool().execute(post);
+        } else if (action.equals("put")) {
+            String urlString = args.getString(0);
+            JSONObject params = args.getJSONObject(1);
+            JSONObject headers = args.getJSONObject(2);
+            HashMap<?, ?> paramsMap = this.getMapFromJSONObject(params);
+            HashMap<String, String> headersMap = this.addToMap(this.globalHeaders, headers);
+            CordovaHttpPut put = new CordovaHttpPut(urlString, paramsMap, headersMap, callbackContext);
+            cordova.getThreadPool().execute(put);
+        } else if (action.equals("delete")) {
+            String urlString = args.getString(0);
+            JSONObject params = args.getJSONObject(1);
+            JSONObject headers = args.getJSONObject(2);
+            HashMap<?, ?> paramsMap = this.getMapFromJSONObject(params);
+            HashMap<String, String> headersMap = this.addToMap(this.globalHeaders, headers);
+            CordovaHttpDelete delete = new CordovaHttpDelete(urlString, paramsMap, headersMap, callbackContext);
+            cordova.getThreadPool().execute(delete);
         } else if (action.equals("useBasicAuth")) {
             String username = args.getString(0);
             String password = args.getString(1);
@@ -87,6 +103,11 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             String header = args.getString(0);
             String value = args.getString(1);
             this.setHeader(header, value);
+            callbackContext.success();
+        } else if (action.equals("setTimeouts")) {
+            int connectionTimeout = args.getInt(0);
+            int readTimeout = args.getInt(1);
+            CordovaHttp.setTimeouts(connectionTimeout, readTimeout);
             callbackContext.success();
         } else if (action.equals("uploadFile")) {
             String urlString = args.getString(0);
