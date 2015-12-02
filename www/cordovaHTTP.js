@@ -117,11 +117,11 @@ if (typeof angular !== "undefined") {
             get: function(url, params, headers) {
                 return makePromise(http.get, [url, params, headers], true);
             },
-            uploadFile: function(url, params, headers, filePath, name) {
-                return makePromise(http.uploadFile, [url, params, headers, filePath, name], true);
+            uploadFile: function(url, params, headers, filePath, name, success, failure) {
+                return makePromise(http.uploadFile, [url, params, headers, filePath, name, success, failure], true);
             },
-            downloadFile: function(url, params, headers, filePath) {
-                return makePromise(http.downloadFile, [url, params, headers, filePath], true);
+            downloadFile: function(url, params, headers, filePath, success, failure) {
+                return makePromise(http.downloadFile, [url, params, headers, filePath, success, failure], true);
             }
         };
         return cordovaHTTP;
