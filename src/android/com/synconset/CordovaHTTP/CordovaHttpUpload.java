@@ -37,8 +37,8 @@ public class CordovaHttpUpload extends CordovaHttp implements Runnable {
     @Override
     public void run() {
         try {
-            HttpRequest request = HttpRequest.post(this.getUrlString());
-            this.setupSecurity(request);
+            request = HttpRequest.post(this.getUrlString());
+            this.setupSecurity();
             request.acceptCharset(CHARSET);
             request.headers(this.getHeaders());
             URI uri = new URI(filePath);
@@ -71,6 +71,7 @@ public class CordovaHttpUpload extends CordovaHttp implements Runnable {
             
             JSONObject response = new JSONObject();
             response.put("status", code);
+			response.put("headersJson", request.headersJson());
             if (code >= 200 && code < 300) {
                 response.put("data", body);
                 this.getCallbackContext().success(response);

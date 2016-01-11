@@ -76,6 +76,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -2154,6 +2155,31 @@ public class HttpRequest {
   public Map<String, List<String>> headers() throws HttpRequestException {
     closeOutputQuietly();
     return getConnection().getHeaderFields();
+  }
+  
+  public String headersJson() throws HttpRequestException {
+    Map<String, List<String>> headers = this.headers();
+    
+    if(headers == null || headers.size() == 0)
+        return null;
+
+    StringBuilder sb = new StringBuilder();
+    sb.append('{');
+    String delim = "";
+    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+        sb.append(delim).append("\"").append(entry.getKey()).append("\": \"");
+        String delim2 = "";
+        for (String value : entry.getValue()) {
+            sb.append(delim2).append(value);
+            delim2 = ", ";
+        }
+        sb.append("\"");
+        delim = ", ";
+    }
+
+    sb.append('}');
+
+    return sb.toString();
   }
 
   /**
