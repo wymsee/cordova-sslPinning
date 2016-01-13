@@ -40,6 +40,7 @@ public abstract class CordovaHttp {
     private Map<?, ?> params;
     private Map<String, String> headers;
     private CallbackContext callbackContext;
+    protected HttpRequest request;
     
     public CordovaHttp(String urlString, Map<?, ?> params, Map<String, String> headers, CallbackContext callbackContext) {
         this.urlString = urlString;
@@ -78,7 +79,7 @@ public abstract class CordovaHttp {
         return this.callbackContext;
     }
     
-    protected HttpRequest setupSecurity(HttpRequest request) {
+    protected void setupSecurity() {
         if (acceptAllCerts.get()) {
             request.trustAllCerts();
             request.trustAllHosts();
@@ -86,7 +87,6 @@ public abstract class CordovaHttp {
         if (sslPinning.get()) {
             request.pinToCerts();
         }
-        return request;
     }
     
     protected void respondWithError(int status, String msg) {
@@ -94,6 +94,7 @@ public abstract class CordovaHttp {
             JSONObject response = new JSONObject();
             response.put("status", status);
             response.put("error", msg);
+            response.put("headersJson", request.headersJson());
             this.callbackContext.error(response);
         } catch (JSONException e) {
             this.callbackContext.error(msg);

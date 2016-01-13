@@ -25,8 +25,8 @@ public class CordovaHttpPost extends CordovaHttp implements Runnable {
     @Override
     public void run() {
         try {
-            HttpRequest request = HttpRequest.post(this.getUrlString());
-            this.setupSecurity(request);
+            request = HttpRequest.post(this.getUrlString());
+            this.setupSecurity();
             request.acceptCharset(CHARSET);
             request.headers(this.getHeaders());
             request.form(this.getParams());
@@ -34,6 +34,7 @@ public class CordovaHttpPost extends CordovaHttp implements Runnable {
             String body = request.body(CHARSET);
             JSONObject response = new JSONObject();
             response.put("status", code);
+			response.put("headersJson", request.headersJson());
             if (code >= 200 && code < 300) {
                 response.put("data", body);
                 this.getCallbackContext().success(response);

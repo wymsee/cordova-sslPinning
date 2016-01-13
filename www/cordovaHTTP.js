@@ -6,6 +6,25 @@
 
 var exec = require('cordova/exec');
 
+var parseData = function(response, func){
+	if(response.headersJson)
+	{
+		var headers = JSON.parse(response.headersJson);
+		response.headers = function(header){
+			return headers[header];
+		};
+	}
+	if(response.data){
+		var contentType = response.headers("Content-Type");
+		if(contentType && contentType.indexOf("application/json") != -1)
+		{
+			var data = JSON.parse(response.data);
+			response.data = data;
+		}
+	}
+	func(response);
+}
+
 var http = {
     useBasicAuth: function(username, password, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "useBasicAuth", [username, password]);
@@ -20,13 +39,31 @@ var http = {
         return exec(success, failure, "CordovaHttpPlugin", "acceptAllCerts", [allow]);
     },
     post: function(url, params, headers, success, failure) {
-        return exec(success, failure, "CordovaHttpPlugin", "post", [url, params, headers]);
+		var handleDataSuccess = function(response){
+			parseData(response, success);
+		}
+		var handleDataFailure = function(response){
+			parseData(response, failure);
+		}
+        return exec(handleDataSuccess, handleDataFailure, "CordovaHttpPlugin", "post", [url, params, headers]);
     },
     get: function(url, params, headers, success, failure) {
-        return exec(success, failure, "CordovaHttpPlugin", "get", [url, params, headers]);
+		var handleDataSuccess = function(response){
+			parseData(response, success);
+		}
+		var handleDataFailure = function(response){
+			parseData(response, failure);
+		}
+        return exec(handleDataSuccess, handleDataFailure, "CordovaHttpPlugin", "get", [url, params, headers]);
     },
     uploadFile: function(url, params, headers, filePath, name, success, failure) {
-        return exec(success, failure, "CordovaHttpPlugin", "uploadFile", [url, params, headers, filePath, name]);
+		var handleDataSuccess = function(response){
+			parseData(response, success);
+		}
+		var handleDataFailure = function(response){
+			parseData(response, failure);
+		}
+        return exec(handleDataSuccess, handleDataFailure, "CordovaHttpPlugin", "uploadFile", [url, params, headers, filePath, name]);
     },
     downloadFile: function(url, params, headers, filePath, success, failure) {
         /*

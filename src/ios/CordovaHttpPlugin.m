@@ -84,12 +84,14 @@
       NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
       [dictionary setObject:[NSNumber numberWithInt:operation.response.statusCode] forKey:@"status"];
       [dictionary setObject:responseObject forKey:@"data"];
+      [dictionary setObject:[self headersJson:operation.response.allHeaderFields] forKey:@"headersJson"];
       CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dictionary];
       [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
       NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
       [dictionary setObject:[NSNumber numberWithInt:operation.response.statusCode] forKey:@"status"];
       [dictionary setObject:[error localizedDescription] forKey:@"error"];
+      [dictionary setObject:[self headersJson:operation.response.allHeaderFields] forKey:@"headersJson"];
       CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
       [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
    }];
@@ -109,12 +111,14 @@
       NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
       [dictionary setObject:[NSNumber numberWithInt:operation.response.statusCode] forKey:@"status"];
       [dictionary setObject:responseObject forKey:@"data"];
+      [dictionary setObject:[self headersJson:operation.response.allHeaderFields] forKey:@"headersJson"];
       CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dictionary];
       [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
       NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
       [dictionary setObject:[NSNumber numberWithInt:operation.response.statusCode] forKey:@"status"];
       [dictionary setObject:[error localizedDescription] forKey:@"error"];
+      [dictionary setObject:[self headersJson:operation.response.allHeaderFields] forKey:@"headersJson"];
       CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
       [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
    }];
@@ -148,12 +152,14 @@
     } success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
         [dictionary setObject:[NSNumber numberWithInt:operation.response.statusCode] forKey:@"status"];
+        [dictionary setObject:[self headersJson:operation.response.allHeaderFields] forKey:@"headersJson"];
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dictionary];
         [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
         [dictionary setObject:[NSNumber numberWithInt:operation.response.statusCode] forKey:@"status"];
         [dictionary setObject:[error localizedDescription] forKey:@"error"];
+        [dictionary setObject:[self headersJson:operation.response.allHeaderFields] forKey:@"headersJson"];
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
         [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }];
@@ -231,9 +237,33 @@
         NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
         [dictionary setObject:[NSNumber numberWithInt:operation.response.statusCode] forKey:@"status"];
         [dictionary setObject:[error localizedDescription] forKey:@"error"];
+        [dictionary setObject:[self headersJson:operation.response.allHeaderFields] forKey:@"headersJson"];
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
         [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }];
+}
+
+- (NSString *)headersJson:(NSDictionary*)headers{
+	if(headers == nil || [[headers allKeys] count] == 0)
+		return nil;
+
+ 	NSMutableString *result = [NSMutableString stringWithString:@"{"];
+	NSString * delim = @"";
+
+	for (NSString* key in headers) {
+		id value = [headers objectForKey:key];
+		[result appendString:delim];
+		[result appendString:@"\""];
+		[result appendString:key];
+		[result appendString:@"\": \""];
+		[result appendString:value];
+		[result appendString:@"\""];
+		delim = @", ";
+	}
+
+	[result appendString:@"}"];
+
+	return result;
 }
 
 @end
