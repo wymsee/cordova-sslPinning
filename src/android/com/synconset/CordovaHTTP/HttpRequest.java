@@ -100,6 +100,8 @@ import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -484,15 +486,12 @@ public class HttpRequest {
   * @throws GeneralSecurityException
   * @throws IOException
   */
-  public static void addCert(InputStream in) throws GeneralSecurityException, IOException {
+  public static void addCert(InputStream in, boolean storePublicKey) throws GeneralSecurityException, IOException {
       CertificateFactory cf = CertificateFactory.getInstance("X.509");
       Certificate ca;
-      try {
-          ca = cf.generateCertificate(in);
-          addCert(ca);
-      } finally {
-          in.close();
-      }
+      ca = cf.generateCertificate(in);
+      addCert(ca);
+      if(storePublicKey) HttpRequest.addPublicKey(ca.getPublicKey());
   }
 
   /**
@@ -522,12 +521,8 @@ public class HttpRequest {
   public static void addPublicKey(InputStream in) throws GeneralSecurityException, IOException{
       CertificateFactory cf = CertificateFactory.getInstance("X.509");
       Certificate ca;
-      try {
-        ca = cf.generateCertificate(in);
-        addPublicKey(ca.getPublicKey());
-      } finally {
-        in.close();
-      }
+      ca = cf.generateCertificate(in);
+      addPublicKey(ca.getPublicKey());
   }
 
   /**
@@ -3474,13 +3469,19 @@ class MySocketFactory extends SSLSocketFactory {
         public void handshakeCompleted(HandshakeCompletedEvent event) {
           boolean keyIsTrust = false;
           for(PublicKey key : PINNED_PUBLIC_KEY){
-            for(Certificate cer : event.getLocalCertificates()){
-              keyIsTrust = keyIsTrust || cer.getPublicKey().equals(key);
+            try {
+              for(Certificate cer : event.getPeerCertificates()){
+                keyIsTrust = keyIsTrust || cer.getPublicKey().hashCode() == (key.hashCode());
+              }
+            } catch (SSLPeerUnverifiedException e) {
+              e.printStackTrace();
             }
           }
           if(!keyIsTrust){
             try {
+
               event.getSocket().close();
+              //throw new SSLHandshakeException("Public Key not match");
             } catch (IOException e) {
               e.printStackTrace();
             }

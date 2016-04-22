@@ -80,6 +80,15 @@ public class CordovaHttpPlugin extends CordovaPlugin {
                 e.printStackTrace();
                 callbackContext.error("There was an error setting up ssl pinning");
             }
+        } else if (action.equals("enablePublicKeyPinning")) {
+            try {
+                boolean enable = args.getBoolean(0);
+                this.enablePublicKeyPinning(enable);
+                callbackContext.success();
+            } catch(Exception e) {
+                e.printStackTrace();
+                callbackContext.error("There was an error setting up public key pinning");
+            }
         } else if (action.equals("acceptAllCerts")) {
             boolean accept = args.getBoolean(0);
             CordovaHttp.acceptAllCerts(accept);
@@ -181,8 +190,12 @@ public class CordovaHttpPlugin extends CordovaPlugin {
         for (int i = 0; i < cerFiles.size(); i++) {
             InputStream in = cordova.getActivity().getAssets().open(cerFiles.get(i));
             InputStream caInput = new BufferedInputStream(in);
-            HttpRequest.addCert(caInput);
-            if(storePublicKey) HttpRequest.addPublicKey(caInput);
+            try{
+                HttpRequest.addCert(caInput, storePublicKey);
+            }
+            finally {
+                in.close();
+            }
         }
     }
 }
