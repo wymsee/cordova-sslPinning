@@ -40,6 +40,9 @@ var http = {
     enableSSLPinning: function(enable, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "enableSSLPinning", [enable]);
     },
+    enablePublicKeyPinning: function(enable, success, failure) {
+        return exec(success, failure, "CordovaHttpPlugin", "enablePublicKeyPinning", [enable]);
+    },
     acceptAllCerts: function(allow, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "acceptAllCerts", [allow]);
     },
@@ -106,7 +109,7 @@ if (typeof angular !== "undefined") {
     angular.module('cordovaHTTP', []).factory('cordovaHTTP', function($timeout, $q) {
         function makePromise(fn, args, async) {
             var deferred = $q.defer();
-            
+
             var success = function(response) {
                 if (async) {
                     $timeout(function() {
@@ -116,7 +119,7 @@ if (typeof angular !== "undefined") {
                     deferred.resolve(response);
                 }
             };
-            
+
             var fail = function(response) {
                 if (async) {
                     $timeout(function() {
@@ -126,15 +129,15 @@ if (typeof angular !== "undefined") {
                     deferred.reject(response);
                 }
             };
-            
+
             args.push(success);
             args.push(fail);
-            
+
             fn.apply(http, args);
-            
+
             return deferred.promise;
         }
-        
+
         var cordovaHTTP = {
             getBasicAuthHeader: http.getBasicAuthHeader,
             useBasicAuth: function(username, password) {
@@ -145,6 +148,9 @@ if (typeof angular !== "undefined") {
             },
             enableSSLPinning: function(enable) {
                 return makePromise(http.enableSSLPinning, [enable]);
+            },
+            enablePublicKeyPinning: function(enable) {
+                return makePromise(http.enablePublicKeyPinning, [enable]);
             },
             acceptAllCerts: function(allow) {
                 return makePromise(http.acceptAllCerts, [allow]);

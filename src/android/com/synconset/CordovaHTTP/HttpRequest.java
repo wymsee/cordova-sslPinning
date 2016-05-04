@@ -21,6 +21,10 @@
  */
 package com.github.kevinsawicki.http;
 
+import android.net.SSLCertificateSocketFactory;
+import android.net.SSLSessionCache;
+import android.os.Build;
+
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
@@ -51,22 +55,30 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.security.AccessController;
 import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivilegedAction;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -83,10 +95,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
+import javax.net.ssl.HandshakeCompletedEvent;
+import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -259,12 +276,14 @@ public class HttpRequest {
   private static final String CRLF = "\r\n";
 
   private static final String[] EMPTY_STRINGS = new String[0];
-  
+
   private static SSLSocketFactory PINNED_FACTORY;
 
   private static SSLSocketFactory TRUSTED_FACTORY;
-  
+
   private static ArrayList<Certificate> PINNED_CERTS;
+
+  private static ArrayList<PublicKey> PINNED_PUBLIC_KEY;
 
   private static HostnameVerifier TRUSTED_VERIFIER;
 
@@ -274,7 +293,7 @@ public class HttpRequest {
     else
       return CHARSET_UTF8;
   }
-  
+
   private static SSLSocketFactory getPinnedFactory()
       throws HttpRequestException {
     if (PINNED_FACTORY != null) {
@@ -424,8 +443,8 @@ public class HttpRequest {
     else
       CONNECTION_FACTORY = connectionFactory;
   }
-  
-  
+
+
   /**
   * Add a certificate to test against when using ssl pinning.
   *
@@ -442,22 +461,23 @@ public class HttpRequest {
       String keyStoreType = KeyStore.getDefaultType();
       KeyStore keyStore = KeyStore.getInstance(keyStoreType);
       keyStore.load(null, null);
-      
+
       for (int i = 0; i < PINNED_CERTS.size(); i++) {
           keyStore.setCertificateEntry("CA" + i, PINNED_CERTS.get(i));
       }
-      
+
       // Create a TrustManager that trusts the CAs in our KeyStore
       String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
       TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
       tmf.init(keyStore);
-      
+
       // Create an SSLContext that uses our TrustManager
       SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(null, tmf.getTrustManagers(), null);
       PINNED_FACTORY = sslContext.getSocketFactory();
+
   }
-  
+
   /**
   * Add a certificate to test against when using ssl pinning.
   *
@@ -466,15 +486,43 @@ public class HttpRequest {
   * @throws GeneralSecurityException
   * @throws IOException
   */
-  public static void addCert(InputStream in) throws GeneralSecurityException, IOException {
+  public static void addCert(InputStream in, boolean storePublicKey) throws GeneralSecurityException, IOException {
       CertificateFactory cf = CertificateFactory.getInstance("X.509");
       Certificate ca;
-      try {
-          ca = cf.generateCertificate(in);
-          addCert(ca);
-      } finally {
-          in.close();
+      ca = cf.generateCertificate(in);
+      addCert(ca);
+      if(storePublicKey) HttpRequest.addPublicKey(ca.getPublicKey());
+  }
+
+  /**
+   * Add a publick key to test against when using public key pinning pinning.
+   *
+   * @param key
+   *          A Public Key to store for a pinned list
+   * @throws GeneralSecurityException
+   * @throws IOException
+   */
+  public static void addPublicKey(PublicKey key){
+      if (PINNED_PUBLIC_KEY == null) {
+          PINNED_PUBLIC_KEY = new ArrayList<PublicKey>();
       }
+      if(!PINNED_PUBLIC_KEY.contains(key))
+        PINNED_PUBLIC_KEY.add(key);
+  }
+
+  /**
+   * Add a publick key to test against when using public key pinning pinning.
+   *
+   * @param in
+   *          An InputStream to read a certificate from
+   * @throws GeneralSecurityException
+   * @throws IOException
+   */
+  public static void addPublicKey(InputStream in) throws GeneralSecurityException, IOException{
+      CertificateFactory cf = CertificateFactory.getInstance("X.509");
+      Certificate ca;
+      ca = cf.generateCertificate(in);
+      addPublicKey(ca.getPublicKey());
   }
 
   /**
@@ -3246,7 +3294,7 @@ public class HttpRequest {
         form(entry, charset);
     return this;
   }
-  
+
   /**
    * Configure HTTPS connection to trust only certain certificates
    * <p>
@@ -3265,7 +3313,26 @@ public class HttpRequest {
     }
     return this;
   }
-  
+
+  public HttpRequest pinPublicKey(){
+    final HttpURLConnection connection = getConnection();
+    if (connection instanceof HttpsURLConnection) {
+      //((HttpsURLConnection) connection).setSSLSocketFactory(getPinnedFactory());
+
+      try {
+        ((HttpsURLConnection) connection).setSSLSocketFactory(new MySocketFactory(PINNED_PUBLIC_KEY));
+      } catch (KeyManagementException e) {
+        e.printStackTrace();
+      } catch (NoSuchAlgorithmException e) {
+        e.printStackTrace();
+      }
+    } else {
+      IOException e = new IOException("You must use a https url to use ssl pinning");
+      throw new HttpRequestException(e);
+    }
+    return this;
+  }
+
   /**
    * Configure HTTPS connection to trust all certificates
    * <p>
@@ -3344,5 +3411,85 @@ public class HttpRequest {
   public HttpRequest followRedirects(final boolean followRedirects) {
     getConnection().setInstanceFollowRedirects(followRedirects);
     return this;
+  }
+}
+
+class MySocketFactory extends SSLSocketFactory {
+
+  private SSLSocketFactory internalSSLSocketFactory;
+  private  ArrayList<PublicKey> PINNED_PUBLIC_KEY;
+
+  public MySocketFactory(ArrayList<PublicKey> pinnedPublicKey) throws KeyManagementException, NoSuchAlgorithmException {
+    PINNED_PUBLIC_KEY = pinnedPublicKey;
+    SSLContext context = SSLContext.getInstance("TLS");
+    context.init(null, null, null);
+    internalSSLSocketFactory = context.getSocketFactory();
+  }
+
+  @Override
+  public String[] getDefaultCipherSuites() {
+    return internalSSLSocketFactory.getDefaultCipherSuites();
+  }
+
+  @Override
+  public String[] getSupportedCipherSuites() {
+    return internalSSLSocketFactory.getSupportedCipherSuites();
+  }
+
+  @Override
+  public Socket createSocket(Socket s, String host, int port, boolean autoClose) throws IOException {
+    return customHandshake(internalSSLSocketFactory.createSocket(s, host, port, autoClose));
+  }
+
+  @Override
+  public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
+    return customHandshake(internalSSLSocketFactory.createSocket(host, port));
+  }
+
+  @Override
+  public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
+    return customHandshake(internalSSLSocketFactory.createSocket(host, port, localHost, localPort));
+  }
+
+  @Override
+  public Socket createSocket(InetAddress host, int port) throws IOException {
+    return customHandshake(internalSSLSocketFactory.createSocket(host, port));
+  }
+
+  @Override
+  public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+    return customHandshake(internalSSLSocketFactory.createSocket(address, port, localAddress, localPort));
+  }
+
+  private Socket customHandshake(Socket socket) {
+
+    if(socket != null && (socket instanceof SSLSocket)) {
+      ((SSLSocket) socket).addHandshakeCompletedListener(new HandshakeCompletedListener() {
+        @Override
+        public void handshakeCompleted(HandshakeCompletedEvent event) {
+          boolean keyIsTrust = false;
+          for(PublicKey key : PINNED_PUBLIC_KEY){
+            try {
+              for(Certificate cer : event.getPeerCertificates()){
+                keyIsTrust = keyIsTrust || cer.getPublicKey().hashCode() == (key.hashCode());
+              }
+            } catch (SSLPeerUnverifiedException e) {
+              e.printStackTrace();
+            }
+          }
+          if(!keyIsTrust){
+            try {
+
+              event.getSocket().close();
+              //throw new SSLHandshakeException("Public Key not match");
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+
+        }
+      });
+    }
+    return socket;
   }
 }
