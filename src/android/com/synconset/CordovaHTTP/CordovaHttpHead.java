@@ -24,12 +24,12 @@ import android.util.Log;
 
 import com.github.kevinsawicki.http.HttpRequest;
 import com.github.kevinsawicki.http.HttpRequest.HttpRequestException;
- 
+
 public class CordovaHttpHead extends CordovaHttp implements Runnable {
     public CordovaHttpHead(String urlString, Map<?, ?> params, Map<String, String> headers, CallbackContext callbackContext) {
         super(urlString, params, headers, callbackContext);
     }
-    
+
     @Override
     public void run() {
         try {
@@ -40,6 +40,7 @@ public class CordovaHttpHead extends CordovaHttp implements Runnable {
             int code = request.code();
             JSONObject response = new JSONObject();
             this.addResponseHeaders(request, response);
+            this.addCurrentRequestUrl(request, response);
             response.put("status", code);
             if (code >= 200 && code < 300) {
                 // no 'body' to return for HEAD request
