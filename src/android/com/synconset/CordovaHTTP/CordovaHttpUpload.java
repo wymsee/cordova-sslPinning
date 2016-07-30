@@ -23,17 +23,17 @@ import android.webkit.MimeTypeMap;
 
 import com.github.kevinsawicki.http.HttpRequest;
 import com.github.kevinsawicki.http.HttpRequest.HttpRequestException;
- 
+
 public class CordovaHttpUpload extends CordovaHttp implements Runnable {
     private String filePath;
     private String name;
-    
+
     public CordovaHttpUpload(String urlString, Map<?, ?> params, Map<String, String> headers, CallbackContext callbackContext, String filePath, String name) {
         super(urlString, params, headers, callbackContext);
         this.filePath = filePath;
         this.name = name;
     }
-    
+
     @Override
     public void run() {
         try {
@@ -49,7 +49,7 @@ public class CordovaHttpUpload extends CordovaHttp implements Runnable {
             MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
             String mimeType = mimeTypeMap.getMimeTypeFromExtension(ext);
             request.part(this.name, filename, mimeType, new File(uri));
-            
+
             Set<?> set = (Set<?>)this.getParams().entrySet();
             Iterator<?> i = set.iterator();
             while (i.hasNext()) {
@@ -65,12 +65,13 @@ public class CordovaHttpUpload extends CordovaHttp implements Runnable {
                     return;
                 }
             }
-            
+
             int code = request.code();
             String body = request.body(CHARSET);
-            
+
             JSONObject response = new JSONObject();
             this.addResponseHeaders(request, response);
+            this.addCurrentRequestUrl(request, response);
             response.put("status", code);
             if (code >= 200 && code < 300) {
                 response.put("data", body);
