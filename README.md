@@ -53,6 +53,8 @@ Set a header for all future requests.  Takes a header and a value.
 
     cordovaHTTP.setHeader("Header", "Value");
     
+### setCacheResults
+Use this call to enable caching of resutls for GET/POST/HEAD calls.  By defult, caching is disabled
 
 ## Async Functions
 These functions all take success and error callbacks as their last 2 arguments.

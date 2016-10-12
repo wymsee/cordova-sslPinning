@@ -37,6 +37,7 @@ public abstract class CordovaHttp {
     
     private static AtomicBoolean sslPinning = new AtomicBoolean(false);
     private static AtomicBoolean acceptAllCerts = new AtomicBoolean(false);
+    private static AtomicBoolean cacheResults = new AtomicBoolean(false);
     private static AtomicBoolean validateDomainName = new AtomicBoolean(true);
 
     private String urlString;
@@ -58,6 +59,10 @@ public abstract class CordovaHttp {
         this.jsonObject = jsonObject;
         this.headers = headers;
         this.callbackContext = callbackContext;
+    }
+
+    public static void setCacheResults(boolean willCacheResults) {
+        cacheResults.set(willCacheResults);
     }
     
     public static void enableSSLPinning(boolean enable) {
@@ -88,6 +93,10 @@ public abstract class CordovaHttp {
     
     protected Map<String, String> getHeaders() {
         return this.headers;
+    }
+
+    protected boolean getCacheResults() {
+        return this.cachResults;
     }
     
     protected CallbackContext getCallbackContext() {
