@@ -27,6 +27,7 @@ function mergeHeaders(globalHeaders, localHeaders) {
 
 var http = {
     headers: {},
+    cacheResponse: false,
     sslPinning: false,
     getBasicAuthHeader: function(username, password) {
         return {'Authorization': 'Basic ' + b64EncodeUnicode(username + ':' + password)};
@@ -36,6 +37,9 @@ var http = {
     },
     setHeader: function(header, value) {
         this.headers[header] = value;
+    },
+    setCacheResponse: function(willCacheResponse) {
+        this.cacheResponse = willCacheResponse;
     },
     enableSSLPinning: function(enable, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "enableSSLPinning", [enable]);
@@ -48,15 +52,15 @@ var http = {
     },
     post: function(url, params, headers, success, failure) {
         headers = mergeHeaders(this.headers, headers);
-        return exec(success, failure, "CordovaHttpPlugin", "post", [url, params, headers]);
+        return exec(success, failure, "CordovaHttpPlugin", "post", [url, params, headers, this.cacheResponse]);
     },
     get: function(url, params, headers, success, failure) {
         headers = mergeHeaders(this.headers, headers);
-        return exec(success, failure, "CordovaHttpPlugin", "get", [url, params, headers]);
+        return exec(success, failure, "CordovaHttpPlugin", "get", [url, params, headers, this.cacheResponse]);
     },
     head: function(url, params, headers, success, failure) {
         headers = mergeHeaders(this.headers, headers);
-        return exec(success, failure, "CordovaHttpPlugin", "head", [url, params, headers]);
+        return exec(success, failure, "CordovaHttpPlugin", "head", [url, params, headers, this.cacheResponse]);
     },
     uploadFile: function(url, params, headers, filePath, name, success, failure) {
         headers = mergeHeaders(this.headers, headers);
@@ -142,6 +146,9 @@ if (typeof angular !== "undefined") {
             },
             setHeader: function(header, value) {
                 return http.setHeader(header, value);
+            },
+            setCacheResponse: function(willCacheResponse) {
+                return http.setCacheResponse(willCacheResponse);
             },
             enableSSLPinning: function(enable) {
                 return makePromise(http.enableSSLPinning, [enable]);
