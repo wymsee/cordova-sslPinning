@@ -37,6 +37,7 @@ public class CordovaHttpHead extends CordovaHttp implements Runnable {
             this.setupSecurity(request);
             request.acceptCharset(CHARSET);
             request.headers(this.getHeaders());
+	    request.useCaches(this.getCachResults());
             int code = request.code();
             JSONObject response = new JSONObject();
             this.addResponseHeaders(request, response);
