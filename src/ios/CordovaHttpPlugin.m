@@ -115,6 +115,10 @@
     NSString *url = [command.arguments objectAtIndex:0];
     NSData *parameters = [command.arguments objectAtIndex:1];
     NSDictionary *headers = [command.arguments objectAtIndex:2];
+    bool cacheResults = [[command.arguments objectAtIndex:3] boolValue];
+    
+    if (!cacheResults)
+        manager.session.configuration.URLCache = nil;
     
     [headers setValue:@"application/json" forKey:@"Content-Type"];
     [self setRequestHeaders: headers forManager:manager];
