@@ -96,7 +96,7 @@ public abstract class CordovaHttp {
     }
 
     protected boolean getCacheResults() {
-        return this.cachResults;
+        return this.cacheResults;
     }
     
     protected CallbackContext getCallbackContext() {
