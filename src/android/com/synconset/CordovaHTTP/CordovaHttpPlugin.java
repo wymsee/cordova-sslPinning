@@ -52,7 +52,7 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             JSONObject params = args.getJSONObject(1);
             JSONObject headers = args.getJSONObject(2);
 	    boolean cacheResults = args.getBoolean(3);
-            CordovaHttp.cacheResults(cacheResults);
+            CordovaHttp.setCacheResults(cacheResults);
             HashMap<?, ?> paramsMap = this.getMapFromJSONObject(params);
             HashMap<String, String> headersMap = this.getStringMapFromJSONObject(headers);
             CordovaHttpGet get = new CordovaHttpGet(urlString, paramsMap, headersMap, callbackContext);
@@ -62,7 +62,7 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             JSONObject params = args.getJSONObject(1);
             JSONObject headers = args.getJSONObject(2);
 	    boolean cacheResults = args.getBoolean(3);
-            CordovaHttp.cacheResults(cacheResults);
+            CordovaHttp.setCacheResults(cacheResults);
             HashMap<?, ?> paramsMap = this.getMapFromJSONObject(params);
             HashMap<String, String> headersMap = this.getStringMapFromJSONObject(headers);
             CordovaHttpHead head = new CordovaHttpHead(urlString, paramsMap, headersMap, callbackContext);
@@ -72,7 +72,7 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             JSONObject params = args.getJSONObject(1);
             JSONObject headers = args.getJSONObject(2);
 	    boolean cacheResults = args.getBoolean(3);
-            CordovaHttp.cacheResults(cacheResults);
+            CordovaHttp.setCacheResults(cacheResults);
             HashMap<?, ?> paramsMap = this.getMapFromJSONObject(params);
             HashMap<String, String> headersMap = this.getStringMapFromJSONObject(headers);
             CordovaHttpPost post = new CordovaHttpPost(urlString, paramsMap, headersMap, callbackContext);
@@ -106,7 +106,7 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             JSONObject jsonObj = args.getJSONObject(1);
             JSONObject headers = args.getJSONObject(2);
 	    boolean cacheResults = args.getBoolean(3);
-            CordovaHttp.cacheResults(cacheResults);
+            CordovaHttp.setCacheResults(cacheResults);
             HashMap<String, String> headersMap = this.getStringMapFromJSONObject(headers);
             CordovaHttpPostJson postJson = new CordovaHttpPostJson(urlString, jsonObj, headersMap, callbackContext);
             cordova.getThreadPool().execute(postJson);
