@@ -37,18 +37,32 @@ public abstract class CordovaHttp {
     
     private static AtomicBoolean sslPinning = new AtomicBoolean(false);
     private static AtomicBoolean acceptAllCerts = new AtomicBoolean(false);
+    private static AtomicBoolean cacheResults = new AtomicBoolean(false);
     private static AtomicBoolean validateDomainName = new AtomicBoolean(true);
 
     private String urlString;
     private Map<?, ?> params;
+    private JSONObject jsonObject;
     private Map<String, String> headers;
     private CallbackContext callbackContext;
-    
+
+
     public CordovaHttp(String urlString, Map<?, ?> params, Map<String, String> headers, CallbackContext callbackContext) {
         this.urlString = urlString;
         this.params = params;
         this.headers = headers;
         this.callbackContext = callbackContext;
+    }
+
+    public CordovaHttp(String urlString, JSONObject jsonObject, Map<String, String> headers, CallbackContext callbackContext) {
+        this.urlString = urlString;
+        this.jsonObject = jsonObject;
+        this.headers = headers;
+        this.callbackContext = callbackContext;
+    }
+
+    public static void setCacheResults(boolean willCacheResults) {
+        cacheResults.set(willCacheResults);
     }
     
     public static void enableSSLPinning(boolean enable) {
@@ -80,6 +94,10 @@ public abstract class CordovaHttp {
     protected Map<String, String> getHeaders() {
         return this.headers;
     }
+
+    protected boolean getCacheResults() {
+        return this.cacheResults.get();
+    }
     
     protected CallbackContext getCallbackContext() {
         return this.callbackContext;
@@ -110,7 +128,7 @@ public abstract class CordovaHttp {
     }
     
     protected void respondWithError(String msg) {
-        this.respondWithError(500, msg);
+        this.respondWithError(526, msg);
     }
 
     protected void addResponseHeaders(HttpRequest request, JSONObject response) throws JSONException {
@@ -124,5 +142,13 @@ public abstract class CordovaHttp {
             }
         }
         response.put("headers", new JSONObject(parsed_headers));
+    }
+
+    public JSONObject getJsonObject() {
+        return jsonObject;
+    }
+
+    public void setJsonObject(JSONObject jsonObject) {
+        this.jsonObject = jsonObject;
     }
 }

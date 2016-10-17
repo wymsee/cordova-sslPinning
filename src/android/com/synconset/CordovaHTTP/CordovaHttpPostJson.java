@@ -3,45 +3,39 @@
  */
 package com.synconset;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.Map;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.HostnameVerifier;
-
-import javax.net.ssl.SSLHandshakeException;
+import com.github.kevinsawicki.http.HttpRequest;
+import com.github.kevinsawicki.http.HttpRequest.HttpRequestException;
 
 import org.apache.cordova.CallbackContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.util.Map;
 
-import com.github.kevinsawicki.http.HttpRequest;
-import com.github.kevinsawicki.http.HttpRequest.HttpRequestException;
- 
-public class CordovaHttpGet extends CordovaHttp implements Runnable {
-    public CordovaHttpGet(String urlString, Map<?, ?> params, Map<String, String> headers, CallbackContext callbackContext) {
-        super(urlString, params, headers, callbackContext);
+import javax.net.ssl.SSLHandshakeException;
+
+public class CordovaHttpPostJson extends CordovaHttp implements Runnable {
+    public CordovaHttpPostJson(String urlString, JSONObject jsonObject, Map<String, String> headers, CallbackContext callbackContext) {
+        super(urlString, jsonObject, headers, callbackContext);
     }
-    
+
     @Override
     public void run() {
         try {
-            HttpRequest request = HttpRequest.get(this.getUrlString(), this.getParams(), false);
+            HttpRequest request = HttpRequest.post(this.getUrlString());
             this.setupSecurity(request);
-            request.acceptCharset(CHARSET);
+
             request.headers(this.getHeaders());
-	    request.useCaches(this.getCacheResults());
+            request.acceptJson();
+            request.contentType(HttpRequest.CONTENT_TYPE_JSON);
+            request.send(getJsonObject().toString());
             int code = request.code();
             String body = request.body(CHARSET);
+
+
             JSONObject response = new JSONObject();
-            this.addResponseHeaders(request, response);
             response.put("status", code);
             if (code >= 200 && code < 300) {
                 response.put("data", body);
@@ -57,6 +51,8 @@ public class CordovaHttpGet extends CordovaHttp implements Runnable {
                 this.respondWithError(0, "The host could not be resolved");
             } else if (e.getCause() instanceof SSLHandshakeException) {
                 this.respondWithError("SSL handshake failed");
+            } else if (e.getCause() instanceof SocketTimeoutException) {
+                this.respondWithError("Timeout");
             } else {
                 this.respondWithError("There was an error with the request");
             }

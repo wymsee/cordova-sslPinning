@@ -14,7 +14,7 @@ function b64EncodeUnicode(str) {
 }
 
 function mergeHeaders(globalHeaders, localHeaders) {
-    var globalKeys = Object.keys(globalHeaders);
+    var globalKeys = globalHeaders ? Object.keys(globalHeaders) : [];
     var key;
     for (var i = 0; i < globalKeys.length; i++) {
         key = globalKeys[i];
@@ -27,6 +27,7 @@ function mergeHeaders(globalHeaders, localHeaders) {
 
 var http = {
     headers: {},
+    cacheResults: false,
     sslPinning: false,
     getBasicAuthHeader: function(username, password) {
         return {'Authorization': 'Basic ' + b64EncodeUnicode(username + ':' + password)};
@@ -36,6 +37,9 @@ var http = {
     },
     setHeader: function(header, value) {
         this.headers[header] = value;
+    },
+    setCacheResults: function(willCacheResults) {
+        this.cacheResults = willCacheResults;
     },
     enableSSLPinning: function(enable, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "enableSSLPinning", [enable]);
@@ -48,15 +52,26 @@ var http = {
     },
     post: function(url, params, headers, success, failure) {
         headers = mergeHeaders(this.headers, headers);
-        return exec(success, failure, "CordovaHttpPlugin", "post", [url, params, headers]);
+        return exec(success, failure, "CordovaHttpPlugin", "post", [url, params, headers, this.cacheResults]);
+    },
+    delete: function(url, params, headers, success, failure) {
+        headers = mergeHeaders(this.headers, headers);
+        return exec(success, failure, "CordovaHttpPlugin", "delete", [url, params, headers]);
+    },
+    put: function(url, params, headers, success, failure) {
+                return exec(success, failure, "CordovaHttpPlugin", "put", [url, params, headers]);
+    },
+    postJson: function(url, params, headers, success, failure) {
+        headers = mergeHeaders(this.headers, headers);
+        return exec(success, failure, "CordovaHttpPlugin", "postJson", [url, params, headers, this.cacheResults]);
     },
     get: function(url, params, headers, success, failure) {
         headers = mergeHeaders(this.headers, headers);
-        return exec(success, failure, "CordovaHttpPlugin", "get", [url, params, headers]);
+        return exec(success, failure, "CordovaHttpPlugin", "get", [url, params, headers, this.cacheResults]);
     },
     head: function(url, params, headers, success, failure) {
         headers = mergeHeaders(this.headers, headers);
-        return exec(success, failure, "CordovaHttpPlugin", "head", [url, params, headers]);
+        return exec(success, failure, "CordovaHttpPlugin", "head", [url, params, headers, this.cacheResults]);
     },
     uploadFile: function(url, params, headers, filePath, name, success, failure) {
         headers = mergeHeaders(this.headers, headers);
@@ -143,6 +158,9 @@ if (typeof angular !== "undefined") {
             setHeader: function(header, value) {
                 return http.setHeader(header, value);
             },
+            setCacheResults: function(willCacheResults) {
+                return http.setCacheResults(willCacheResults);
+            },
             enableSSLPinning: function(enable) {
                 return makePromise(http.enableSSLPinning, [enable]);
             },
@@ -154,6 +172,15 @@ if (typeof angular !== "undefined") {
             },
             post: function(url, params, headers) {
                 return makePromise(http.post, [url, params, headers], true);
+            },
+            delete: function(url, params, headers) {
+                return makePromise(http.delete, [url, params, headers], true);
+            },
+            put: function(url, params, headers) {
+                return makePromise(http.put, [url, params, headers], true);
+            },
+            postJson: function(url, params, headers) {
+                return makePromise(http.postJson, [url, params, headers], true);
             },
             get: function(url, params, headers) {
                 return makePromise(http.get, [url, params, headers], true);
