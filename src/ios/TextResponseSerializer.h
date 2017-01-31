@@ -3,6 +3,6 @@
 
 @interface TextResponseSerializer : AFHTTPResponseSerializer
 
-+ (instancetype)serializer;
++ (instancetype)serializer:(NSDictionary*)headers;
 
 @end
