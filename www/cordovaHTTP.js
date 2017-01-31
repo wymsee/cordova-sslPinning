@@ -103,7 +103,7 @@ var http = {
 module.exports = http;
 
 if (typeof angular !== "undefined") {
-    angular.module('cordovaHTTP', []).factory('cordovaHTTP', function($timeout, $q) {
+    angular.module('cordovaHTTP', []).factory('cordovaHTTP', ['$timeout', '$q', function($timeout, $q) {
         function makePromise(fn, args, async) {
             var deferred = $q.defer();
             
@@ -169,7 +169,7 @@ if (typeof angular !== "undefined") {
             }
         };
         return cordovaHTTP;
-    });
+    }]);
 } else {
     window.cordovaHTTP = http;
 }
