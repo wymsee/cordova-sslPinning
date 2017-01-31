@@ -12,18 +12,25 @@ static BOOL AFErrorOrUnderlyingErrorHasCodeInDomain(NSError *error, NSInteger co
 
 @implementation TextResponseSerializer
 
-+ (instancetype)serializer {
-    TextResponseSerializer *serializer = [[self alloc] init];
++ (instancetype)serializer:(NSDictionary *)headers {
+    TextResponseSerializer *serializer = [[self alloc] init: headers];
     return serializer;
 }
 
-- (instancetype)init {
+- (instancetype)init:(NSDictionary *)headers {
     self = [super init];
     if (!self) {
         return nil;
     }
 
     self.acceptableContentTypes = [NSSet setWithObjects:@"text/plain", @"text/html", @"text/json", @"application/json", @"text/xml", @"application/xml", @"text/css", nil];
+
+    if ([headers objectForKey:@"Accept"]) {
+        NSString *acceptHeader = [headers valueForKeyPath:@"Accept"];
+        acceptHeader = [acceptHeader stringByReplacingOccurrencesOfString:@" " withString:@""];
+        NSArray *acceptHeaderList = [acceptHeader componentsSeparatedByString:@","];
+        self.acceptableContentTypes = [self.acceptableContentTypes setByAddingObjectsFromArray:acceptHeaderList];
+    }
 
     return self;
 }
