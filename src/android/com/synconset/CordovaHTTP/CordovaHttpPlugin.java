@@ -109,7 +109,7 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             cordova.getThreadPool().execute(download);
         } else if (action.equals("disableRedirect")) {
             boolean disable = args.getBoolean(0);
-            CordovaHttp.disableRedirect = disable;
+            CordovaHttp.disableRedirect(disable);
             callbackContext.success();
         } else {
             return false;
