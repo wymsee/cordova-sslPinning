@@ -7,16 +7,19 @@
 
 - (void)setRequestHeaders:(NSDictionary*)headers forManager:(AFHTTPSessionManager*)manager;
 - (void)setResults:(NSMutableDictionary*)dictionary withTask:(NSURLSessionTask*)task;
+- (void)setRedirect:(AFHTTPSessionManager*)manager;
 
 @end
 
 
 @implementation CordovaHttpPlugin {
     AFSecurityPolicy *securityPolicy;
+    bool redirect;
 }
 
 - (void)pluginInitialize {
     securityPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
+    redirect = true;
 }
 
 - (void)setRequestHeaders:(NSDictionary*)headers forManager:(AFHTTPSessionManager*)manager {
@@ -31,6 +34,16 @@
         NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
         [dictionary setObject:[NSNumber numberWithInt:response.statusCode] forKey:@"status"];
         [dictionary setObject:response.allHeaderFields forKey:@"headers"];
+    }
+}
+
+- (void)setRedirect:(AFHTTPSessionManager*)manager {
+    [manager setTaskWillPerformHTTPRedirectionBlock:^NSURLRequest * _Nonnull(NSURLSession * _Nonnull session, NSURLSessionTask * _Nonnull task, NSURLResponse * _Nonnull response, NSURLRequest * _Nonnull request) {
+        if (redirect) {
+            return redirect;
+        } else {
+            return nil;
+        }
     }
 }
 
@@ -66,6 +79,16 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)disableRedirect:(CDVInvokedUrlCommand*)command {
+    CDVPluginResult* pluginResult = nil;
+    bool disable = [[command.arguments objectAtIndex:0] boolValue];
+
+    redirect = !disable;
+
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 - (void)post:(CDVInvokedUrlCommand*)command {
     AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
     manager.securityPolicy = securityPolicy;
@@ -73,6 +96,7 @@
     NSDictionary *parameters = [command.arguments objectAtIndex:1];
     NSDictionary *headers = [command.arguments objectAtIndex:2];
     [self setRequestHeaders: headers forManager: manager];
+    [self setRedirect: manager];
    
     CordovaHttpPlugin* __weak weakSelf = self;
     manager.responseSerializer = [TextResponseSerializer serializer];
@@ -99,6 +123,7 @@
     NSDictionary *parameters = [command.arguments objectAtIndex:1];
     NSDictionary *headers = [command.arguments objectAtIndex:2];
     [self setRequestHeaders: headers forManager: manager];
+    [self setRedirect: manager];
    
     CordovaHttpPlugin* __weak weakSelf = self;
    
@@ -126,6 +151,7 @@
     NSDictionary *parameters = [command.arguments objectAtIndex:1];
     NSDictionary *headers = [command.arguments objectAtIndex:2];
     [self setRequestHeaders: headers forManager: manager];
+    [self setRedirect: manager];
     
     CordovaHttpPlugin* __weak weakSelf = self;
     
@@ -158,6 +184,7 @@
     NSURL *fileURL = [NSURL URLWithString: filePath];
     
     [self setRequestHeaders: headers forManager: manager];
+    [self setRedirect: manager];
     
     CordovaHttpPlugin* __weak weakSelf = self;
     manager.responseSerializer = [TextResponseSerializer serializer];
@@ -197,6 +224,7 @@
     NSString *filePath = [command.arguments objectAtIndex: 3];
    
     [self setRequestHeaders: headers forManager: manager];
+    [self setRedirect: manager];
     
     if ([filePath hasPrefix:@"file://"]) {
         filePath = [filePath substringFromIndex:7];

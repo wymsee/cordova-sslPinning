@@ -38,6 +38,7 @@ public abstract class CordovaHttp {
     private static AtomicBoolean sslPinning = new AtomicBoolean(false);
     private static AtomicBoolean acceptAllCerts = new AtomicBoolean(false);
     private static AtomicBoolean validateDomainName = new AtomicBoolean(true);
+    private static AtomicBoolean disableRedirect = new AtomicBoolean(false);
 
     private String urlString;
     private Map<?, ?> params;
@@ -69,6 +70,10 @@ public abstract class CordovaHttp {
         validateDomainName.set(accept);
     }
 
+    public static void disableRedirect(boolean disable) {
+        disableRedirect.set(disable);
+    }
+
     protected String getUrlString() {
         return this.urlString;
     }
@@ -95,6 +100,14 @@ public abstract class CordovaHttp {
         if (sslPinning.get()) {
             request.pinToCerts();
         }
+        return request;
+    }
+
+    protected HttpRequest setupRedirect(HttpRequest request) {
+        if (disableRedirect.get()) {
+            request.followRedirects(false);
+        }
+
         return request;
     }
     

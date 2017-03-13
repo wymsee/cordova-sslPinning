@@ -38,6 +38,7 @@ public class CordovaHttpUpload extends CordovaHttp implements Runnable {
     public void run() {
         try {
             HttpRequest request = HttpRequest.post(this.getUrlString());
+            this.setupRedirect(request);
             this.setupSecurity(request);
             request.acceptCharset(CHARSET);
             request.headers(this.getHeaders());
