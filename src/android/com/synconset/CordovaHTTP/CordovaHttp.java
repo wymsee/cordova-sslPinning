@@ -119,9 +119,24 @@ public abstract class CordovaHttp {
         for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
             String key = entry.getKey();
             List<String> value = entry.getValue();
-            if ((key != null) && (!value.isEmpty())) {
-                parsed_headers.put(key, value.get(0));
-            }
+            if(key != null) {
+                if(value.size() == 1) {
+                    parsed_headers.put(key, value.get(0));
+                } 
+                else if(value.size() > 1) {   // multi cookies, usually 'Set-Cookie' header
+                    StringBuffer sb = new StringBuffer(64);
+                    for(String val : value) {
+                        int index = val.indexOf("path="); // remove "path=/" at the end of a cookie
+                        if( index >= 0) {
+                            sb.append(val.substring(0, index));
+                        } 
+                        else {
+                            sb.append(val);   
+                        }
+                    }
+                    parsed_headers.put(key, sb.toString());
+                }           
+            }  // end of 'if(key != null)'
         }
         response.put("headers", new JSONObject(parsed_headers));
     }
