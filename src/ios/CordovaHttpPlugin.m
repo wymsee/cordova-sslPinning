@@ -155,6 +155,15 @@
     NSString *filePath = [command.arguments objectAtIndex: 3];
     NSString *name = [command.arguments objectAtIndex: 4];
     
+    if ([filePath hasPrefix:@"http://localhost"]) {
+        NSString *prefix = [self.commandDelegate.settings objectForKey:[@"LocalhostPrefix" lowercaseString]];
+        if (prefix != nil) {
+            NSRange urlRange = NSMakeRange(prefix.length, filePath.length - prefix.length);
+            NSString *basePath = [filePath substringWithRange:urlRange];
+            filePath = [NSString stringWithFormat:@"file://%@", basePath];
+        }
+    }
+
     NSURL *fileURL = [NSURL URLWithString: filePath];
     
     [self setRequestHeaders: headers forManager: manager];
@@ -202,6 +211,14 @@
         filePath = [filePath substringFromIndex:7];
     }
     
+    if ([filePath hasPrefix:@"http://localhost"]) {
+        NSString *prefix = [self.commandDelegate.settings objectForKey:[@"LocalhostPrefix" lowercaseString]];
+        if (prefix != nil) {
+            NSRange urlRange = NSMakeRange(prefix.length, filePath.length - prefix.length);
+            filePath = [filePath substringWithRange:urlRange];
+        }
+    }
+        
     CordovaHttpPlugin* __weak weakSelf = self;
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     [manager GET:url parameters:parameters progress:nil success:^(NSURLSessionTask *task, id responseObject) {
