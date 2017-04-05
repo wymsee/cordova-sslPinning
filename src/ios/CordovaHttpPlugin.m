@@ -40,11 +40,11 @@
 - (void)setRedirect:(AFHTTPSessionManager*)manager {
     [manager setTaskWillPerformHTTPRedirectionBlock:^NSURLRequest * _Nonnull(NSURLSession * _Nonnull session, NSURLSessionTask * _Nonnull task, NSURLResponse * _Nonnull response, NSURLRequest * _Nonnull request) {
         if (redirect) {
-            return redirect;
+            return request;
         } else {
             return nil;
         }
-    }
+    }];
 }
 
 - (void)enableSSLPinning:(CDVInvokedUrlCommand*)command {
