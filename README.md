@@ -52,6 +52,11 @@ This sets up all future requests to use Basic HTTP authentication with the given
 Set a header for all future requests.  Takes a header and a value.
 
     cordovaHTTP.setHeader("Header", "Value");
+
+### disableRedirect
+If set to `true`, it won't follow redirects automatically. This is a global setting.
+
+    cordovaHTTP.disableRedirect(true);
     
 
 ## Async Functions

@@ -43,6 +43,9 @@ var http = {
     acceptAllCerts: function(allow, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "acceptAllCerts", [allow]);
     },
+    disableRedirect: function(disable, success, failure) {
+        return exec(success, failure, "CordovaHttpPlugin", "disableRedirect", [disable]);
+    },
     validateDomainName: function(validate, success, failure) {
         return exec(success, failure, "CordovaHttpPlugin", "validateDomainName", [validate]);
     },
@@ -145,6 +148,9 @@ if (typeof angular !== "undefined") {
             },
             enableSSLPinning: function(enable) {
                 return makePromise(http.enableSSLPinning, [enable]);
+            },
+            disableRedirect: function(disable) {
+                return makePromise(http.disableRedirect, [disable]);
             },
             acceptAllCerts: function(allow) {
                 return makePromise(http.acceptAllCerts, [allow]);
