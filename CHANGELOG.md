@@ -1,4 +1,45 @@
 # Changelog
+## v1.5.7
+
+- Add custom error on certificate fail
+
+## v1.5.6
+
+- All response header keys are converted to lowercase (iOS only)
+
+## v1.5.5
+
+- added a function to remove all cookies for a URL
+
+## v1.5.4
+
+- fixed an error if the response has no "headers" field
+
+## v1.5.3
+
+- handles cookies correctly on non-success response from server
+- throws error when a callback function is missing
+
+## v1.5.2
+
+- fixed missing file "umd-tough-cookie.js“ (caused by missing file ".npmignore")
+
+## v1.5.1
+
+- fixed case-sensitive path name of android source files ("CordovaHTTP" --> "cordovahttp")
+
+## v1.5.0
+
+- added cookie handling
+- cookies are persisted via web storage API
+
+## v1.4.0
+
+- forked from "cordova-plugin-http" v1.2.0 (see https://github.com/wymsee/cordova-HTTP)
+- added configuration for data serializer
+- added HTTP methods PUT and DELETE
+
+# Previous changelog (cordova-plugin-http)
 
 ## v1.2.0
 

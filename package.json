@@ -1,9 +1,13 @@
 {
-  "name": "cordova-plugin-http",
-  "version": "1.2.0",
+  "name": "cordova-plugin-advanced-http-custom-error",
+  "version": "1.5.9",
   "description": "Cordova / Phonegap plugin for communicating with HTTP servers using SSL pinning",
+  "scripts": {
+    "build": "cp node_modules/umd-tough-cookie/lib/umd-tough-cookie.js www/umd-tough-cookie.js",
+    "prepublish": "npm run build"
+  },
   "cordova": {
-    "id": "cordova-plugin-http",
+    "id": "cordova-plugin-advanced-http-custom-error",
     "platforms": [
       "ios",
       "android"
@@ -11,25 +15,41 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wymsee/cordova-HTTP.git"
+    "url": "git+https://github.com/ginjiban/cordova-plugin-advanced-http.git"
   },
   "keywords": [
     "cordova",
     "device",
     "ecosystem:cordova",
     "cordova-ios",
-    "cordova-android"
+    "cordova-android",
+    "ssl",
+    "tls"
   ],
   "engines": [
     {
       "name": "cordova",
-      "version": ">=3.0.0"
+      "version": ">=4.0.0"
     }
   ],
   "author": "Wymsee",
+  "contributors": [
+    "devgeeks",
+    "EddyVerbruggen",
+    "mbektchiev",
+    "denisbabineau",
+    "andrey-tsaplin",
+    "pvsaikrishna",
+    "cvillerm",
+    "hideov",
+    "Mobisys"
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/wymsee/cordova-HTTP/issues"
+    "url": "https://github.com/ginjiban/cordova-plugin-advanced-http/issues"
   },
-  "homepage": "https://github.com/wymsee/cordova-HTTP#readme"
+  "homepage": "https://github.com/ginjiban/cordova-plugin-advanced-http#readme",
+  "devDependencies": {
+    "umd-tough-cookie": "2.3.2"
+  }
 }
