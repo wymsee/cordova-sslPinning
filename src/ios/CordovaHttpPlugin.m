@@ -66,6 +66,17 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)handleGenericFailure:(NSURLSessionTask *)task withError:(NSError *)error forWeakSelf:(CordovaHttpPlugin *)weakSelf forCommand:(CDVInvokedUrlCommand *)command {
+  NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
+    [self setResults: dictionary withTask: task];
+    NSString* errResponse = [[NSString alloc] initWithData:(NSData *)error.userInfo[AFNetworkingOperationFailingURLResponseDataErrorKey] encoding:NSUTF8StringEncoding];
+    if (errResponse != nil) {
+        [dictionary setObject:errResponse forKey:@"error"];
+    }
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
+    [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 - (void)post:(CDVInvokedUrlCommand*)command {
     AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
     manager.securityPolicy = securityPolicy;
@@ -83,12 +94,7 @@
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dictionary];
         [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     } failure:^(NSURLSessionTask *task, NSError *error) {
-        NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
-        [self setResults: dictionary withTask: task];
-        NSString* errResponse = [[NSString alloc] initWithData:(NSData *)error.userInfo[AFNetworkingOperationFailingURLResponseDataErrorKey] encoding:NSUTF8StringEncoding];
-        [dictionary setObject:errResponse forKey:@"error"];
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
-        [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self handleGenericFailure:task withError:error forWeakSelf:weakSelf forCommand:command];
     }];
 }
 
@@ -110,12 +116,7 @@
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dictionary];
         [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     } failure:^(NSURLSessionTask *task, NSError *error) {
-        NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
-        [self setResults: dictionary withTask: task];
-        NSString* errResponse = [[NSString alloc] initWithData:(NSData *)error.userInfo[AFNetworkingOperationFailingURLResponseDataErrorKey] encoding:NSUTF8StringEncoding];
-        [dictionary setObject:errResponse forKey:@"error"];
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
-        [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self handleGenericFailure:task withError:error forWeakSelf:weakSelf forCommand:command];
     }];
 }
 
@@ -137,12 +138,7 @@
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dictionary];
         [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     } failure:^(NSURLSessionTask *task, NSError *error) {
-        NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
-        [self setResults: dictionary withTask: task];
-        NSString* errResponse = [[NSString alloc] initWithData:(NSData *)error.userInfo[AFNetworkingOperationFailingURLResponseDataErrorKey] encoding:NSUTF8StringEncoding];
-        [dictionary setObject:errResponse forKey:@"error"];
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
-        [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self handleGenericFailure:task withError:error forWeakSelf:weakSelf forCommand:command];
     }];
 }
 
@@ -178,12 +174,7 @@
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dictionary];
         [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     } failure:^(NSURLSessionTask *task, NSError *error) {
-        NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
-        [self setResults: dictionary withTask: task];
-        NSString* errResponse = [[NSString alloc] initWithData:(NSData *)error.userInfo[AFNetworkingOperationFailingURLResponseDataErrorKey] encoding:NSUTF8StringEncoding];
-        [dictionary setObject:errResponse forKey:@"error"];
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
-        [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self handleGenericFailure:task withError:error forWeakSelf:weakSelf forCommand:command];
     }];
 }
 
@@ -261,12 +252,7 @@
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dictionary];
         [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     } failure:^(NSURLSessionTask *task, NSError *error) {
-        NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
-        [self setResults: dictionary withTask: task];
-        NSString* errResponse = [[NSString alloc] initWithData:(NSData *)error.userInfo[AFNetworkingOperationFailingURLResponseDataErrorKey] encoding:NSUTF8StringEncoding];
-        [dictionary setObject:errResponse forKey:@"error"];
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:dictionary];
-        [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        [self handleGenericFailure:task withError:error forWeakSelf:weakSelf forCommand:command];
     }];
 }
 
