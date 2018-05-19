@@ -107,6 +107,7 @@ public abstract class CordovaHttp {
         if (sslPinning.get()) {
             request.pinToCerts();
         }
+        request.useTlsProtocols(new String[] { "TLSv1.1", "TLSv1.2" });
         return request;
     }
     

@@ -3283,6 +3283,22 @@ public class HttpRequest {
   }
 
   /**
+   * Configure HTTPS connection to use specific TLS Protocols
+   * <p>
+   * This method does nothing if the current request is not a HTTPS request
+   *
+   * @return this request
+   * @throws HttpRequestException
+   */
+  public HttpRequest useTlsProtocols(String[] tlsProtocols) throws HttpRequestException {
+    final HttpURLConnection connection = getConnection();
+    if (connection instanceof HttpsURLConnection)
+      ((HttpsURLConnection) connection)
+          .setSSLSocketFactory(new TLSSocketFactory(tlsProtocols));
+    return this;
+  }
+
+  /**
    * Configure HTTPS connection to trust all hosts using a custom
    * {@link HostnameVerifier} that always returns <code>true</code> for each
    * host verified
