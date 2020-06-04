@@ -1,31 +1,128 @@
 #import "TextResponseSerializer.h"
 
-static BOOL AFErrorOrUnderlyingErrorHasCodeInDomain(NSError *error, NSInteger code, NSString *domain) {
-    if ([error.domain isEqualToString:domain] && error.code == code) {
-        return YES;
-    } else if (error.userInfo[NSUnderlyingErrorKey]) {
-        return AFErrorOrUnderlyingErrorHasCodeInDomain(error.userInfo[NSUnderlyingErrorKey], code, domain);
-    }
+static NSError * AFErrorWithUnderlyingError(NSError *error, NSError *underlyingError) {
+  if (!error) {
+    return underlyingError;
+  }
 
-    return NO;
+  if (!underlyingError || error.userInfo[NSUnderlyingErrorKey]) {
+    return error;
+  }
+
+  NSMutableDictionary *mutableUserInfo = [error.userInfo mutableCopy];
+  mutableUserInfo[NSUnderlyingErrorKey] = underlyingError;
+
+  return [[NSError alloc] initWithDomain:error.domain code:error.code userInfo:mutableUserInfo];
+}
+
+static BOOL AFErrorOrUnderlyingErrorHasCodeInDomain(NSError *error, NSInteger code, NSString *domain) {
+  if ([error.domain isEqualToString:domain] && error.code == code) {
+    return YES;
+  } else if (error.userInfo[NSUnderlyingErrorKey]) {
+    return AFErrorOrUnderlyingErrorHasCodeInDomain(error.userInfo[NSUnderlyingErrorKey], code, domain);
+  }
+
+  return NO;
 }
 
 @implementation TextResponseSerializer
 
 + (instancetype)serializer {
-    TextResponseSerializer *serializer = [[self alloc] init];
-    return serializer;
+  TextResponseSerializer *serializer = [[self alloc] init];
+  return serializer;
 }
 
 - (instancetype)init {
-    self = [super init];
-    if (!self) {
-        return nil;
+  self = [super init];
+
+  if (!self) {
+    return nil;
+  }
+
+  self.acceptableContentTypes = nil;
+
+  return self;
+}
+
+- (NSString*)decodeResponseData:(NSData*)rawResponseData withEncoding:(CFStringEncoding)cfEncoding {
+  NSStringEncoding nsEncoding;
+  NSString* decoded = nil;
+
+  if (cfEncoding != kCFStringEncodingInvalidId) {
+    nsEncoding = CFStringConvertEncodingToNSStringEncoding(cfEncoding);
+  }
+
+  NSStringEncoding supportedEncodings[6] = {
+    NSUTF8StringEncoding, NSWindowsCP1252StringEncoding, NSISOLatin1StringEncoding,
+    NSISOLatin2StringEncoding, NSASCIIStringEncoding, NSUnicodeStringEncoding
+  };
+
+  for (int i = 0; i < sizeof(supportedEncodings) / sizeof(NSStringEncoding) && !decoded; ++i) {
+    if (cfEncoding == kCFStringEncodingInvalidId || nsEncoding == supportedEncodings[i]) {
+      decoded = [[NSString alloc] initWithData:rawResponseData encoding:supportedEncodings[i]];
+    }
+  }
+
+  return decoded;
+}
+
+- (CFStringEncoding) getEncoding:(NSURLResponse *)response {
+  CFStringEncoding encoding = kCFStringEncodingInvalidId;
+
+  if (response.textEncodingName) {
+    encoding = CFStringConvertIANACharSetNameToEncoding((CFStringRef)response.textEncodingName);
+  }
+
+  return encoding;
+}
+
+#pragma mark -
+
+- (BOOL)validateResponse:(NSHTTPURLResponse *)response
+                    data:(NSData *)data
+                 decoded:(NSString **)decoded
+                   error:(NSError * __autoreleasing *)error
+{
+  BOOL responseIsValid = YES;
+  NSError *validationError = nil;
+
+  if (response && [response isKindOfClass:[NSHTTPURLResponse class]]) {
+    if (data) {
+      *decoded = [self decodeResponseData:data withEncoding:[self getEncoding:response]];
     }
 
-    self.acceptableContentTypes = [NSSet setWithObjects:@"text/plain", @"text/html", @"text/json", @"application/json", @"text/xml", @"application/xml", @"text/css", nil];
+    if (data && !*decoded) {
+      NSMutableDictionary *mutableUserInfo = [@{
+        NSURLErrorFailingURLErrorKey:[response URL],
+        AFNetworkingOperationFailingURLResponseErrorKey: response,
+        AFNetworkingOperationFailingURLResponseDataErrorKey: data,
+        AFNetworkingOperationFailingURLResponseBodyErrorKey: @"Could not decode response data due to invalid or unknown charset encoding",
+      } mutableCopy];
 
-    return self;
+      validationError = AFErrorWithUnderlyingError([NSError errorWithDomain:AFURLResponseSerializationErrorDomain code:NSURLErrorBadServerResponse userInfo:mutableUserInfo], validationError);
+      responseIsValid = NO;
+    } else if (self.acceptableStatusCodes && ![self.acceptableStatusCodes containsIndex:(NSUInteger)response.statusCode] && [response URL]) {
+      NSMutableDictionary *mutableUserInfo = [@{
+        NSLocalizedDescriptionKey: [NSString stringWithFormat:NSLocalizedStringFromTable(@"Request failed: %@ (%ld)", @"AFNetworking", nil), [NSHTTPURLResponse localizedStringForStatusCode:response.statusCode], (long)response.statusCode],
+        NSURLErrorFailingURLErrorKey: [response URL],
+        AFNetworkingOperationFailingURLResponseErrorKey: response,
+      } mutableCopy];
+
+      if (data) {
+        mutableUserInfo[AFNetworkingOperationFailingURLResponseDataErrorKey] = data;
+        mutableUserInfo[AFNetworkingOperationFailingURLResponseBodyErrorKey] = *decoded;
+      }
+
+      validationError = AFErrorWithUnderlyingError([NSError errorWithDomain:AFURLResponseSerializationErrorDomain code:NSURLErrorBadServerResponse userInfo:mutableUserInfo], validationError);
+      responseIsValid = NO;
+    }
+  }
+
+  if (error && !responseIsValid) {
+    *error = validationError;
+  }
+
+  return responseIsValid;
 }
 
 #pragma mark - AFURLResponseSerialization
@@ -34,25 +131,15 @@ static BOOL AFErrorOrUnderlyingErrorHasCodeInDomain(NSError *error, NSInteger co
                            data:(NSData *)data
                           error:(NSError *__autoreleasing *)error
 {
-    if (![self validateResponse:(NSHTTPURLResponse *)response data:data error:error]) {
-        if (!error || AFErrorOrUnderlyingErrorHasCodeInDomain(*error, NSURLErrorCannotDecodeContentData, AFURLResponseSerializationErrorDomain)) {
-            return nil;
-        }
+  NSString* decoded = nil;
+
+  if (![self validateResponse:(NSHTTPURLResponse *)response data:data decoded:&decoded error:error]) {
+    if (!error || AFErrorOrUnderlyingErrorHasCodeInDomain(*error, NSURLErrorCannotDecodeContentData, AFURLResponseSerializationErrorDomain)) {
+      return nil;
     }
+  }
 
-    // Workaround for behavior of Rails to return a single space for `head :ok` (a workaround for a bug in Safari), which is not interpreted as valid input by NSJSONSerialization.
-    // See https://github.com/rails/rails/issues/1742
-    NSStringEncoding stringEncoding = self.stringEncoding;
-    if (response.textEncodingName) {
-        CFStringEncoding encoding = CFStringConvertIANACharSetNameToEncoding((CFStringRef)response.textEncodingName);
-        if (encoding != kCFStringEncodingInvalidId) {
-            stringEncoding = CFStringConvertEncodingToNSStringEncoding(encoding);
-        }
-    }
-
-    NSString *responseString = [[NSString alloc] initWithData:data encoding:stringEncoding];
-
-    return responseString;
+  return decoded;
 }
 
 @end
